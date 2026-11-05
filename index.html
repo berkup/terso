@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Reverse Audio App</title>
+  
+  <!-- Mobile & PWA Meta Tagleri -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0f172a" />
+  
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      color: #f8fafc;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 40px 20px;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .header {
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #38bdf8;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+
+    .status-badge {
+      padding: 8px 20px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.08);
+      color: #cbd5e1;
+      backdrop-filter: blur(8px);
+      transition: all 0.3s ease;
+    }
+
+    .status-badge.recording {
+      background: #ef4444;
+      color: #fff;
+      animation: pulse 1.2s infinite;
+    }
+
+    .status-badge.ready {
+      background: #22c55e;
+      color: #fff;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.05); opacity: 0.85; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .controls-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    .record-btn {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      border: 4px solid rgba(255, 255, 255, 0.1);
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 12px 30px rgba(239, 68, 68, 0.4);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .record-btn:active, .record-btn.active {
+      transform: scale(0.90);
+      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+      box-shadow: 0 6px 15px rgba(239, 68, 68, 0.6);
+    }
+
+    .record-btn svg {
+      width: 40px;
+      height: 40px;
+      fill: currentColor;
+    }
+
+    .record-btn span {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .play-btn {
+      width: 100%;
+      height: 56px;
+      border-radius: 16px;
+      border: none;
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .play-btn:disabled {
+      background: rgba(255, 255, 255, 0.05);
+      color: #475569;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    .play-btn:not(:disabled):active {
+      transform: scale(0.97);
+    }
+
+    .play-btn svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+
+    .footer-note {
+      font-size: 12px;
+      color: #64748b;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>REVERSE VOICE</h1>
+    <p class="subtitle">Sesini kaydet, tersten dinle!</p>
+  </div>
+
+  <div id="status" class="status-badge">Başlamak İçin Dokun</div>
+
+  <div class="controls-container">
+    <button id="recordBtn" class="record-btn">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+        <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+      </svg>
+      <span>BASILI TUT</span>
+    </button>
+
+    <button id="playBtn" class="play-btn" disabled>
+      <svg viewBox="0 0 24 24">
+        <path d="M8 5v14l11-7z"/>
+      </svg>
+      Tersten Oynat
+    </button>
+  </div>
+
+  <div class="footer-note">
+    💡 İpucu: iOS'ta telefonun sessiz modda olmadığından emin olun.
+  </div>
+
+  <script>
+    let mediaRecorder;
+    let audioChunks = [];
+    let audioContext = null;
+    let reversedAudioBuffer = null;
+
+    const recordBtn = document.getElementById('recordBtn');
+    const playBtn = document.getElementById('playBtn');
+    const statusBadge = document.getElementById('status');
+
+    // Mobil AudioContext Aktivasyonu
+    function initAudioContext() {
+      if (!audioContext) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        audioContext = new AudioCtx();
+      }
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+    }
+
+    async function initMicrophone() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) audioChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+          audioChunks = [];
+          
+          const arrayBuffer = await audioBlob.arrayBuffer();
+          initAudioContext();
+          
+          const decodedData = await audioContext.decodeAudioData(arrayBuffer);
+          reversedAudioBuffer = reverseBuffer(decodedData);
+
+          statusBadge.textContent = 'Kayıt Hazır!';
+          statusBadge.className = 'status-badge ready';
+          playBtn.disabled = false;
+        };
+      } catch (err) {
+        statusBadge.textContent = 'Mikrofon İzni Gerekli';
+      }
+    }
+
+    function reverseBuffer(buffer) {
+      const channels = buffer.numberOfChannels;
+      const reversed = audioContext.createBuffer(channels, buffer.length, buffer.sampleRate);
+      for (let c = 0; c < channels; c++) {
+        const input = buffer.getChannelData(c);
+        const output = reversed.getChannelData(c);
+        for (let i = 0; i < buffer.length; i++) {
+          output[i] = input[buffer.length - 1 - i];
+        }
+      }
+      return reversed;
+    }
+
+    function startRecording(e) {
+      if (e) e.preventDefault();
+      initAudioContext();
+      
+      if (!mediaRecorder) {
+        initMicrophone().then(() => {
+          if (mediaRecorder) mediaRecorder.start();
+        });
+      } else {
+        audioChunks = [];
+        mediaRecorder.start();
+      }
+
+      recordBtn.classList.add('active');
+      statusBadge.textContent = 'Kaydediliyor...';
+      statusBadge.className = 'status-badge recording';
+      playBtn.disabled = true;
+    }
+
+    function stopRecording(e) {
+      if (e) e.preventDefault();
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        recordBtn.classList.remove('active');
+        statusBadge.textContent = 'İşleniyor...';
+        statusBadge.className = 'status-badge';
+      }
+    }
+
+    function playAudio() {
+      if (!reversedAudioBuffer) return;
+      initAudioContext();
+
+      const source = audioContext.createBufferSource();
+      source.buffer = reversedAudioBuffer;
+      source.connect(audioContext.destination);
+      source.start(0);
+
+      statusBadge.textContent = 'Oynatılıyor...';
+      statusBadge.className = 'status-badge recording';
+
+      source.onended = () => {
+        statusBadge.textContent = 'Kayıt Hazır!';
+        statusBadge.className = 'status-badge ready';
+      };
+    }
+
+    // Mobil & Dokunmatik Olayları
+    recordBtn.addEventListener('touchstart', startRecording);
+    recordBtn.addEventListener('touchend', stopRecording);
+    recordBtn.addEventListener('mousedown', startRecording);
+    recordBtn.addEventListener('mouseup', stopRecording);
+
+    playBtn.addEventListener('click', playAudio);
+
+    // Sayfa yüklendiğinde mikrofona ön hazırlık
+    window.addEventListener('load', initMicrophone);
+  </script>
+</body>
+</html>
